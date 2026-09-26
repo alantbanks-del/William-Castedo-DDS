@@ -88,6 +88,7 @@ h2.h{font-size:clamp(30px,4.2vw,48px)}
 .mark{width:112px;height:66px;background:#fff;border:1px solid var(--edge-2);border-radius:12px;padding:8px;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:700;color:#fff}
 .mark img{max-width:100%;max-height:100%;width:auto;object-fit:contain}
 .mark.gs{background:linear-gradient(140deg,#5b3e96,#4f5bd5);border-color:transparent;font-size:15px}
+.mark.zaga{background:linear-gradient(140deg,#0ea394,#14b8a6);border-color:transparent;font-size:15px;letter-spacing:.06em}
 .cred b{display:block;font-family:var(--display);color:var(--ink);font-size:16px;letter-spacing:-.01em}
 .cred span{font-size:14.5px}
 
