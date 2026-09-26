@@ -59,8 +59,8 @@ h2.h{font-size:clamp(30px,4.2vw,48px)}
 .hero p.intro{font-size:clamp(16.5px,1.6vw,18.5px);margin:20px 0 30px;max-width:56ch}
 .hero .ctas{display:flex;gap:12px;flex-wrap:wrap}
 .portrait{max-width:372px;margin-left:auto}
-.portrait .plate{background:linear-gradient(170deg,rgba(255,255,255,.7),rgba(239,230,216,.9));border:1px solid var(--edge);border-radius:28px;overflow:hidden;box-shadow:var(--shadow-lg);backdrop-filter:blur(6px)}
-.portrait img{width:100%;max-width:372px;margin:0 auto}
+.portrait .plate{display:block;background:linear-gradient(170deg,rgba(255,255,255,.7),rgba(239,230,216,.9));border:1px solid var(--edge);border-radius:28px;overflow:hidden;box-shadow:var(--shadow-lg);backdrop-filter:blur(6px)}
+.portrait img{width:100%;max-width:372px;height:auto;aspect-ratio:433/498;object-fit:contain;margin:0 auto}
 .portrait .tagstrip{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
 .tagstrip span{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);background:var(--glass);border:1px solid var(--edge);padding:7px 13px;border-radius:var(--pill);backdrop-filter:blur(8px)}
 
