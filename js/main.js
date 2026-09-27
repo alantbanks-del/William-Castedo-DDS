@@ -1,7 +1,7 @@
 /* Booking builder — Dr. William Castedo, DDS
    EDIT PRICING HERE. Day 1 is full rate; each later day gets the discount shown. */
 var CONFIG = {
-  dayRate: 6500,                       // full rate for day one, USD
+  dayRate: 7500,                       // full rate for day one, USD
   dayDiscount: [0, .10, .15, .20, .25],// discount applied to day 1,2,3,4,5
   travelEstimate: 1750,                // flat travel estimate added to every visit
   topicsPerDay: 2,

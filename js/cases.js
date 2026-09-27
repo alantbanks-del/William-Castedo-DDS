@@ -48,13 +48,15 @@ var CASES = [
   var host=document.getElementById('cases');
   if(!host) return;
   var pad=function(n){ return (n<10?'0':'')+n };
+  var KEY='castedo-case-';          // browser-side preview storage
+  var MAXW=1400;                     // images are resized before preview/save
 
   function shot(num,kind,label,pano){
     var file='images/cases/case-'+pad(num)+'-'+kind+'.jpg';
     return '<figure class="shot'+(pano?' pano':'')+(kind.indexOf('after')>-1?' after':'')+'">'+
-      '<div class="frame">'+
+      '<div class="frame" data-file="'+file+'" data-key="'+pad(num)+'-'+kind+'" tabindex="0" role="button" aria-label="Add '+label+' image for case '+num+'">'+
         '<img src="'+file+'" alt="'+label+', case '+num+'" loading="lazy">'+
-        '<div class="ph" hidden><b>'+label+'</b>Add <code>'+file+'</code></div>'+
+        '<div class="ph" hidden><b>'+label+'</b>Drag an image here, or click to choose.<br>Saves as <code>'+file+'</code></div>'+
       '</div><figcaption>'+label+'</figcaption></figure>';
   }
 
@@ -78,11 +80,74 @@ var CASES = [
     '</article>';
   }).join('');
 
-  // swap a missing photo for its placeholder
-  [].forEach.call(host.querySelectorAll('.frame img'),function(img){
+  var input=document.createElement('input');
+  input.type='file'; input.accept='image/*'; input.style.display='none';
+  document.body.appendChild(input);
+  var target=null;
+
+  function show(frame,src){
+    var img=frame.querySelector('img'), ph=frame.querySelector('.ph');
+    img.style.display=''; img.src=src; ph.hidden=true; frame.classList.add('has-img');
+    if(!frame.querySelector('.drop-note')){
+      var n=document.createElement('div'); n.className='drop-note';
+      n.textContent='Preview only — upload '+frame.dataset.file.split('/').pop()+' to images/cases/';
+      frame.appendChild(n);
+    }
+  }
+
+  function handle(frame,file){
+    if(!file || !/^image\//.test(file.type)) return;
+    var fr=new FileReader();
+    fr.onload=function(){
+      var im=new Image();
+      im.onload=function(){
+        var w=im.width, h=im.height;
+        if(w>MAXW){ h=Math.round(h*MAXW/w); w=MAXW }
+        var cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+        cv.getContext('2d').drawImage(im,0,0,w,h);
+        var data=cv.toDataURL('image/jpeg',.86);
+        show(frame,data);
+        try{ localStorage.setItem(KEY+frame.dataset.key,data) }catch(e){}
+        // hand back the correctly named file, ready to upload
+        var a=document.createElement('a');
+        a.href=data; a.download=frame.dataset.file.split('/').pop();
+        document.body.appendChild(a); a.click(); a.remove();
+      };
+      im.src=fr.result;
+    };
+    fr.readAsDataURL(file);
+  }
+
+  input.addEventListener('change',function(){ if(target) handle(target,input.files[0]); input.value='' });
+
+  [].forEach.call(host.querySelectorAll('.frame'),function(frame){
+    var img=frame.querySelector('img'), ph=frame.querySelector('.ph');
     img.addEventListener('error',function(){
-      img.style.display='none';
-      var ph=img.nextElementSibling; if(ph) ph.hidden=false;
+      var saved=null; try{ saved=localStorage.getItem(KEY+frame.dataset.key) }catch(e){}
+      if(saved){ show(frame,saved); return }
+      img.style.display='none'; ph.hidden=false;
     });
+    img.addEventListener('load',function(){ frame.classList.add('has-img') });
+    frame.addEventListener('click',function(){ target=frame; input.click() });
+    frame.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); target=frame; input.click() } });
+    ['dragenter','dragover'].forEach(function(t){
+      frame.addEventListener(t,function(e){ e.preventDefault(); e.stopPropagation(); frame.classList.add('is-over') });
+    });
+    ['dragleave','dragend'].forEach(function(t){
+      frame.addEventListener(t,function(){ frame.classList.remove('is-over') });
+    });
+    frame.addEventListener('drop',function(e){
+      e.preventDefault(); e.stopPropagation(); frame.classList.remove('is-over');
+      handle(frame,e.dataTransfer.files && e.dataTransfer.files[0]);
+    });
+  });
+
+  // stop the browser opening an image dropped outside a slot
+  ['dragover','drop'].forEach(function(t){ window.addEventListener(t,function(e){ e.preventDefault() }) });
+
+  var clear=document.getElementById('clearPreviews');
+  if(clear) clear.addEventListener('click',function(){
+    try{ Object.keys(localStorage).forEach(function(k){ if(k.indexOf(KEY)===0) localStorage.removeItem(k) }) }catch(e){}
+    location.reload();
   });
 })();
