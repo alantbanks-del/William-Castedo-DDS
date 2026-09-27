@@ -81,7 +81,7 @@ var CASES = [
   }).join('');
 
   var input=document.createElement('input');
-  input.type='file'; input.accept='image/*'; input.style.display='none';
+  input.type='file'; input.accept='image/*,application/pdf'; input.style.display='none';
   document.body.appendChild(input);
   var target=null;
 
@@ -95,27 +95,37 @@ var CASES = [
     }
   }
 
+  function busy(frame,msg){
+    var ph=frame.querySelector('.ph');
+    if(ph){ ph.hidden=false; ph.innerHTML='<b>'+msg+'</b>' }
+  }
+  function resetPh(frame,label,file){
+    var ph=frame.querySelector('.ph');
+    if(ph) ph.innerHTML='<b>'+label+'</b>Drag an image or PDF here, or click to choose.<br>Saves as <code>'+file+'</code>';
+  }
+
   function handle(frame,file){
-    if(!file || !/^image\//.test(file.type)) return;
-    var fr=new FileReader();
-    fr.onload=function(){
-      var im=new Image();
-      im.onload=function(){
-        var w=im.width, h=im.height;
-        if(w>MAXW){ h=Math.round(h*MAXW/w); w=MAXW }
-        var cv=document.createElement('canvas'); cv.width=w; cv.height=h;
-        cv.getContext('2d').drawImage(im,0,0,w,h);
-        var data=cv.toDataURL('image/jpeg',.86);
-        show(frame,data);
-        try{ localStorage.setItem(KEY+frame.dataset.key,data) }catch(e){}
-        // hand back the correctly named file, ready to upload
-        var a=document.createElement('a');
-        a.href=data; a.download=frame.dataset.file.split('/').pop();
-        document.body.appendChild(a); a.click(); a.remove();
-      };
-      im.src=fr.result;
-    };
-    fr.readAsDataURL(file);
+    if(!file) return;
+    var label=frame.parentNode.querySelector('figcaption').textContent,
+        name=frame.dataset.file.split('/').pop(),
+        isPano=frame.parentNode.classList.contains('pano'),
+        aspect=isPano?2:4/3;
+    var isPdf = file.type==='application/pdf' || /\.pdf$/i.test(file.name);
+    if(isPdf) busy(frame,'Converting PDF…');
+    ImageTools.toImage(file).then(function(src){
+      return ImageTools.crop(src, aspect, label+' — '+name);
+    }).then(function(out){
+      if(!out){ resetPh(frame,label,frame.dataset.file); return }
+      show(frame,out);
+      try{ localStorage.setItem(KEY+frame.dataset.key,out) }catch(e){}
+      var a=document.createElement('a');
+      a.href=out; a.download=name;
+      document.body.appendChild(a); a.click(); a.remove();
+    }).catch(function(err){
+      console.error('case image error:',err);
+      busy(frame,'Could not use that file: '+(err&&err.message?err.message:err));
+      setTimeout(function(){ resetPh(frame,label,frame.dataset.file) },4000);
+    });
   }
 
   input.addEventListener('change',function(){ if(target) handle(target,input.files[0]); input.value='' });
@@ -129,6 +139,7 @@ var CASES = [
     });
     img.addEventListener('load',function(){ frame.classList.add('has-img') });
     frame.addEventListener('click',function(){ target=frame; input.click() });
+    frame.setAttribute('title','Click to add or replace this image');
     frame.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); target=frame; input.click() } });
     ['dragenter','dragover'].forEach(function(t){
       frame.addEventListener(t,function(e){ e.preventDefault(); e.stopPropagation(); frame.classList.add('is-over') });
